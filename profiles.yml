@@ -1,0 +1,22 @@
+econ250_2025:
+  outputs:
+    dev:
+      dataset: o_omelchenko # TODO: Change this to your personal dataset
+      job_execution_timeout_seconds: 300
+      job_retries: 1
+      location: US
+      method: oauth
+      priority: interactive
+      project: econ250-2025
+      threads: 2
+      type: bigquery
+  target: dev
+my-bigquery-db:
+  outputs:
+    dev:
+      dataset: o_omelchenko # TODO: Change this to your personal dataset
+      method: oauth
+      project: econ250-2025
+      threads: 4
+      type: bigquery
+  target: dev
