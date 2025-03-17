@@ -1,7 +1,7 @@
 econ250_2025:
   outputs:
     dev:
-      dataset: o_omelchenko # TODO: Change this to your personal dataset
+      dataset: yfishbein
       job_execution_timeout_seconds: 300
       job_retries: 1
       location: US
@@ -14,7 +14,7 @@ econ250_2025:
 my-bigquery-db:
   outputs:
     dev:
-      dataset: o_omelchenko # TODO: Change this to your personal dataset
+      dataset: yfishbein
       method: oauth
       project: econ250-2025
       threads: 4
