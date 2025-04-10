@@ -1,0 +1,25 @@
+version: 2
+
+sources:
+  - name: yfishbein
+    database: econ250-2025  
+    schema: yfishbein  
+    tables:
+      - name: assignment1_part1
+      - name: assignment1_part2
+      - name: assignment1_part3
+      - name: assignment1_full
+
+
+  - name: test_dataset
+    database: econ250-2025  
+    schema: test_dataset  
+    tables:
+      - name: arxiv
+
+
+  - name: google_trends
+    database: bigquery-public-data
+    schema: google_trends  
+    tables:
+      - name: international_top_terms
