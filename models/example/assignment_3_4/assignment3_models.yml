@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: stg_assignment3_uk_wiki
+    columns:
+      - name: src
+        description: "Source of the view (mobile or desktop)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['desktop', 'mobile']
+              quote: true
