@@ -1,0 +1,372 @@
+version: 2
+
+models:
+  - name: stg_fp_customers
+    description: >
+      Cleaned and standardized customer data from the Brazilian e-commerce dataset.
+      Each record represents a unique customer ID associated with an order.
+    columns:
+      - name: customer_id
+        description: Unique identifier for each order-customer combination.
+        tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        description: Unique identifier that allows identifying customers who made repurchases.
+        tests:
+          - not_null
+      - name: customer_zip_code_prefix
+        description: First five digits of customer zip code, converted to integer.
+      - name: customer_city
+        description: Customer city name, null values replaced with '(not set)'.
+      - name: customer_state
+        description: Customer state code, standardized to uppercase.
+
+  - name: stg_fp_geolocation
+    description: >
+      Standardized geolocation data for Brazilian zip codes, including latitude, longitude,
+      city and state information.
+    columns:
+      - name: zip_code_prefix
+        description: First 5 digits of zip code, serves as the primary key.
+        tests:
+          - not_null
+      - name: latitude
+        description: Latitude coordinate, converted to float.
+      - name: longitude
+        description: Longitude coordinate, converted to float.
+      - name: city
+        description: City name, with nulls replaced by '(not set)'.
+      - name: state
+        description: State code, standardized to uppercase.
+      - name: has_valid_coordinates
+        description: Boolean flag indicating if both latitude and longitude are present.
+      
+  - name: stg_fp_order_items
+    description: >
+      Cleaned and enhanced data about items purchased within each order. 
+      Includes pricing and calculated values like total item value.
+    columns:
+      - name: order_id
+        description: Unique identifier for the order.
+        tests:
+          - not_null
+      - name: order_item_id
+        description: Sequential number identifying items within the same order, converted to integer.
+        tests:
+          - not_null
+      - name: product_id
+        description: Unique identifier for the product.
+        tests:
+          - not_null
+      - name: seller_id
+        description: Unique identifier for the seller.
+        tests:
+          - not_null
+      - name: shipping_limit_date
+        description: The seller's shipping limit date for handling the order, converted to timestamp.
+        tests:
+          - not_null
+      - name: price
+        description: Item price, converted to numeric.
+        tests:
+          - not_null
+      - name: freight_value
+        description: Item freight value, converted to numeric.
+        tests:
+          - not_null
+      - name: total_item_value
+        description: Calculated sum of price and freight_value.
+        tests:
+          - not_null
+      - name: is_free_item
+        description: Boolean flag indicating if the item price is zero.
+      - name: is_free_shipping
+        description: Boolean flag indicating if the freight value is zero.
+      
+  - name: stg_fp_order_payments
+    description: >
+      Standardized data about order payments, including payment types, installments,
+      and derived fields for payment analysis.
+    columns:
+      - name: order_id
+        description: Unique identifier for the order.
+        tests:
+          - not_null
+      - name: payment_sequential
+        description: Sequence number for multiple payments on the same order, converted to integer.
+        tests:
+          - not_null
+      - name: payment_type
+        description: Standardized payment method chosen by the customer.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['credit_card', 'boleto', 'voucher', 'debit_card', 'other']
+      - name: payment_installments
+        description: Number of installments chosen by the customer, converted to integer.
+        tests:
+          - not_null
+      - name: payment_value
+        description: Transaction value, converted to numeric.
+        tests:
+          - not_null
+          - positive_values
+      - name: is_installment_payment
+        description: Boolean flag indicating if payment has multiple installments.
+      - name: installment_amount
+        description: Calculated amount per installment when payment is divided.
+      - name: is_credit_card
+        description: Boolean flag for credit card payments.
+      - name: is_boleto
+        description: Boolean flag for boleto payments.
+      - name: is_voucher
+        description: Boolean flag for voucher payments.
+      - name: is_debit_card
+        description: Boolean flag for debit card payments.
+      
+  - name: stg_fp_order_reviews
+    description: >
+      Standardized customer review data with derived fields for sentiment analysis
+      and response time calculation.
+    columns:
+      - name: review_id
+        description: Unique identifier for the review.
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: Unique identifier for the order.
+        tests:
+          - not_null
+      - name: review_score
+        description: Rating from 1 to 5 given by the customer, converted to integer.
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]
+      - name: review_comment_title
+        description: Title from the review left by the customer, empty string if null.
+      - name: review_comment_message
+        description: Message from the review left by the customer, empty string if null.
+      - name: review_creation_date
+        description: Date when the satisfaction survey was sent, converted to date.
+        tests:
+          - not_null
+      - name: review_answer_timestamp
+        description: Timestamp when the survey was answered, converted to timestamp.
+      - name: review_sentiment
+        description: >
+          Derived categorical sentiment based on review score:
+          'positive' (4-5), 'neutral' (3), or 'negative' (1-2).
+      - name: has_review_title
+        description: Boolean flag indicating if the review has a title.
+      - name: has_review_message
+        description: Boolean flag indicating if the review has a message.
+      - name: days_to_answer
+        description: Number of days between survey creation and customer response.
+      
+  - name: stg_fp_orders
+    description: >
+      Core order data with standardized statuses, timestamps, and derived fields
+      for order processing and delivery analysis.
+    columns:
+      - name: order_id
+        description: Unique identifier for the order.
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Unique identifier for the customer.
+        tests:
+          - not_null
+      - name: order_status
+        description: Current status of the order, with nulls replaced by '(not set)'.
+        tests:
+          - not_null
+      - name: order_purchase_timestamp
+        description: Order creation timestamp, converted to timestamp.
+        tests:
+          - not_null
+      - name: order_approved_at
+        description: Payment approval timestamp, converted to timestamp.
+      - name: order_delivered_carrier_date
+        description: Date when order was handed to the logistics partner, converted to timestamp.
+      - name: order_delivered_customer_date
+        description: Actual delivery date to the customer, converted to timestamp.
+      - name: order_estimated_delivery_date
+        description: Estimated delivery date, converted to date.
+        tests:
+          - not_null
+      - name: is_delivered
+        description: Boolean flag for delivered orders.
+      - name: is_shipped
+        description: Boolean flag for shipped orders.
+      - name: is_processing
+        description: Boolean flag for processing orders.
+      - name: is_unavailable
+        description: Boolean flag for unavailable orders.
+      - name: is_canceled
+        description: Boolean flag for canceled orders.
+      - name: is_created
+        description: Boolean flag for created orders.
+      - name: is_approved
+        description: Boolean flag for approved orders.
+      - name: is_invoiced
+        description: Boolean flag for invoiced orders.
+      - name: days_to_delivery
+        description: Number of days from purchase to customer delivery.
+      - name: days_to_approval
+        description: Number of days from purchase to payment approval.
+      - name: delivery_vs_estimated_days
+        description: Difference in days between actual and estimated delivery date.
+      - name: delivered_on_time
+        description: Boolean flag indicating if order was delivered on or before the estimated date.
+      - name: is_recent_order
+        description: Boolean flag for orders placed in the last 30 days.
+      - name: order_year
+        description: Year extracted from order purchase timestamp.
+      - name: order_month
+        description: Month (1-12) extracted from order purchase timestamp.
+      - name: order_day
+        description: Day of month extracted from order purchase timestamp.
+      - name: order_day_of_week
+        description: Day of week (1-7) extracted from order purchase timestamp.
+      
+  - name: stg_fp_product_category
+    description: >
+      Standardized product data with corrected field names, proper type casting,
+      and calculated derived fields for dimensional analysis.
+    columns:
+      - name: product_id
+        description: Unique identifier for the product.
+        tests:
+          - unique
+          - not_null
+      - name: product_category_name
+        description: Product category in Portuguese, with nulls replaced by '(not set)'.
+      - name: category_group
+        description: High level category based on EN category.
+        
+  - name: stg_fp_products
+    description: >
+      Intermediate products model that enhances the raw product data with calculated fields
+      for volume, physical dimensions categorization, and content flags.
+      This model standardizes product information for analytics purposes.
+    config:
+      materialized: view
+    columns:
+      - name: product_id
+        description: Unique identifier for the product.
+        tests:
+          - unique
+          - not_null
+      
+      - name: product_category_name
+        description: >
+          Root category of the product in Portuguese.
+          Null values are replaced with '(not set)' for better analysis.
+        tests:
+          - not_null
+      
+      - name: product_name_lenght
+        description: >
+          Number of characters in the product name.
+          Note: The field name preserves the original spelling from the source data.
+      
+      - name: product_description_lenght
+        description: >
+          Number of characters in the product description.
+          Note: The field name preserves the original spelling from the source data.
+      
+      - name: product_photos_qty
+        description: Number of product photos published for this product.
+      
+      - name: product_weight_g
+        description: Product weight measured in grams.
+      
+      - name: product_length_cm
+        description: Product length measured in centimeters.
+      
+      - name: product_height_cm
+        description: Product height measured in centimeters.
+      
+      - name: product_width_cm
+        description: Product width measured in centimeters.
+      
+      - name: product_volume_cm3
+        description: >
+          Calculated product volume in cubic centimeters, derived from 
+          the multiplication of length, height, and width.
+      
+      - name: has_description
+        description: >
+          Boolean flag indicating whether the product has a description (true) or not (false).
+          Derived from product_description_lenght being greater than zero.
+        tests:
+          - not_null
+      
+      - name: has_photos
+        description: >
+          Boolean flag indicating whether the product has photos (true) or not (false).
+          Derived from product_photos_qty being greater than zero.
+        tests:
+          - not_null
+      
+      - name: product_size_category
+        description: >
+          Categorizes products by physical size based on volume:
+          - 'large': volume > 20,000 cm³
+          - 'medium': volume between 10,000 and 20,000 cm³
+          - 'small': volume < 10,000 cm³
+          - '(not set)': when volume cannot be calculated due to missing dimensions
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['large', 'medium', 'small', '(not set)']
+      
+      - name: product_weight_category
+        description: >
+          Categorizes products by weight:
+          - 'heavy': weight > 5,000g (5kg)
+          - 'medium': weight between 2,500g and 5,000g
+          - 'light': weight < 2,500g
+          - '(not set)': when weight is null
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['heavy', 'medium', 'light', '(not set)']
+  - name: stg_fp_sellers
+    description: >
+      Stage sellers model that standardizes seller location data.
+      This model cleans and normalizes seller information for consistent analysis,
+      including handling null values and standardizing text cases.
+    config:
+      materialized: view
+    columns:
+      - name: seller_id
+        description: Unique identifier for the seller.
+        tests:
+          - unique
+          - not_null
+      
+      - name: seller_zip_code_prefix
+        description: >
+          First 5 digits of the seller's zip code,
+          used to join with geolocation data for spatial analysis.
+        tests:
+          - not_null
+      
+      - name: seller_city
+        description: >
+          Seller's city name, standardized to uppercase.
+          Null values are replaced with '(not set)' for better analysis.
+        tests:
+          - not_null
+      
+      - name: seller_state
+        description: >
+          Seller's state code, standardized to uppercase.
+          Null values are replaced with '(not set)' for better analysis.
+        tests:
+          - not_null
