@@ -3,7 +3,7 @@
 select
     customer_id,
     customer_unique_id,
-    customer_zip_code_prefix,
+    customer_zip_code_prefix as zip_code_prefix, 
     upper(
         coalesce(customer_city, '(not set)')
     ) as customer_city,

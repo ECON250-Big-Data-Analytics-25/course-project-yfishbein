@@ -2,7 +2,7 @@
 
 select
     seller_id,
-    seller_zip_code_prefix as seller_zip_code_prefix,
+    seller_zip_code_prefix as zip_code_prefix,
     upper(
         coalesce(seller_city, '(not set)')
     ) as seller_city,
