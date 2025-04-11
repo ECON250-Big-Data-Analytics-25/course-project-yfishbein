@@ -1,0 +1,7 @@
+version: 2
+
+sources:
+  - name: test_dataset
+    tables:
+      - name: assignment5_input
+        description: "Wikipedia pageview data for desktop (uk) and mobile (uk.m) versions"
